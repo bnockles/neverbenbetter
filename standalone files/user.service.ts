@@ -24,12 +24,22 @@ import { AngularFireAnalytics } from '@angular/fire/analytics';
 })
 export class UserService {
 
+  loggedIn: boolean = false;
   private _userDoc: AngularFirestoreDocument<User>;
   private _userData: User;
   private _uid: string;
   userDoc$: Observable<User>;
   private _isModerator: boolean = false;
 
+
+  /**
+   * 
+   * @param afs - Database
+   * @param auth - Manages authentication
+   * @param fns - Handle cloud functions
+   * @param as - Alerts that are presented to the user
+   * @param analytics - Manages Google Analytics
+   */
   constructor(private afs: AngularFirestore, private auth: AngularFireAuth, private fns: AngularFireFunctions, private as: AlertService, private analytics: AngularFireAnalytics) {
 
     //auth.user emits whenever there is a change to the user's authentication status
@@ -63,7 +73,7 @@ export class UserService {
               if (createUserOutput.success) {
                 console.log('doc was initialized')
                 //frontend display:
-                this.notifyInitializastionSucceess();
+                this.notifyInitializationSucceess();
 
                 //now get the user doc:
                 this._userDoc = this.afs.doc<User>('users/' + createUserOutput.userData.id)
@@ -71,7 +81,7 @@ export class UserService {
                 return this._userDoc.valueChanges({ idField: 'id' });
               } else {
                 //frontend notification:
-                this.notifyInitializastionFailure();
+                this.notifyInitializationFailure();
 
                 //if the  cloud function failed, we can throw an error and depending on if any part was successful, maybe the doc will be rtrived on retry (below)
                 throw new Error(createUserOutput.error)
@@ -82,7 +92,7 @@ export class UserService {
             return err;
           } else {
             //any other error
-            this.notifyInitializastionFailure();
+            this.notifyInitializationFailure();
             throw new Error('An unknown error has occured')
           }
         }),
@@ -119,12 +129,12 @@ export class UserService {
     // )
   }
 
-  private notifyInitializastionSucceess() {
+  private notifyInitializationSucceess() {
     this.analytics.logEvent('newAccount')
     this.as.success('Your Perfect Boardgame account was successfully attached to your Google sign in.', 'Welcome!');
   }
 
-  private notifyInitializastionFailure() {
+  private notifyInitializationFailure() {
     this.as.error('Account creation failed.');
   }
 
@@ -145,11 +155,7 @@ export class UserService {
 
   }
 
-  loggedIn: boolean = false;
-
-  // get loggedIn(): boolean {
-  //   return !!this.userData;
-  // }
+  
 
   get isModerator(): boolean {
     return this._isModerator;
